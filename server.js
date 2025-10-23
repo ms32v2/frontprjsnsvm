@@ -1,6 +1,3 @@
-=========================
-🖥️ server.js
-=========================
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -10,15 +7,23 @@ const { Document, Packer, Paragraph, TextRun } = require('docx');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const FILE_NAME = 'front3snsvm.docx';
+const BACKUP_NAME = 'front3snsvm_backup.docx';
 const FILE_PATH = path.join(__dirname, FILE_NAME);
+const BACKUP_PATH = path.join(__dirname, BACKUP_NAME);
 
+// Restore from backup if missing
 if (!fs.existsSync(FILE_PATH)) {
-  console.error(`Missing ${FILE_NAME} in project root. Please add it and restart.`);
-  process.exit(1);
+  if(fs.existsSync(BACKUP_PATH)){
+    fs.copyFileSync(BACKUP_PATH, FILE_PATH);
+    console.log('Restored front3snsvm.docx from backup.');
+  } else {
+    console.error('Missing front3snsvm.docx AND backup file.');
+    process.exit(1);
+  }
 }
 
 app.use(express.json({limit: '20mb'}));
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/file', async (req,res) => {
   try{
