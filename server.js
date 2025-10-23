@@ -20,17 +20,17 @@ app.post("/download", async (req, res) => {
   try {
     const html = req.body.html || "";
 
-    // Clean HTML -> plain text
+    // Clean HTML -> plain text (basic sanitization)
     const text = html
       .replace(/<style[^>]*>.*?<\/style>/gi, "")
       .replace(/<script[^>]*>.*?<\/script>/gi, "")
-      .replace(/<[^>]+>/g, "\n")
-      .replace(/\n{2,}/g, "\n")
+      .replace(/<[^>]+>/g, "\n") // Convert tags to newlines
+      .replace(/\n{2,}/g, "\n") // Collapse multiple newlines
       .trim();
 
     if (!text) return res.status(400).send("Empty document");
 
-    // Create DOCX
+    // Create DOCX (basic paragraphs; for bold, you'd need to parse HTML more deeply)
     const doc = new Document({
       sections: [
         {
