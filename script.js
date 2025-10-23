@@ -1,6 +1,3 @@
-=========================
-📜 script.js
-=========================
 (async function(){
   const editor = document.getElementById('editor');
   const saveBtn = document.getElementById('saveBtn');
