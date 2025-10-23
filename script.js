@@ -1,21 +1,53 @@
-// Keep all existing code untouched
+const editor = document.getElementById("editor");
+const fontSize = document.getElementById("fontSize");
+const boldBtn = document.getElementById("boldBtn");
+const italicBtn = document.getElementById("italicBtn");
+const downloadBtn = document.getElementById("downloadBtn");
+const themeToggle = document.getElementById("themeToggle");
+const status = document.getElementById("status");
 
-// Automatically load a copy of the default DOCX file
-window.addEventListener('DOMContentLoaded', async () => {
-  const defaultFile = 'front3snsvm.docx';
+// Font size
+fontSize.addEventListener("change", () => {
+  document.execCommand("fontSize", false, "7");
+  document.querySelectorAll("font[size='7']").forEach(el => {
+    el.removeAttribute("size");
+    el.style.fontSize = fontSize.value;
+  });
+});
 
+// Bold / Italic
+boldBtn.addEventListener("click", () => document.execCommand("bold"));
+italicBtn.addEventListener("click", () => document.execCommand("italic"));
+
+// Theme switch
+themeToggle.addEventListener("click", () => {
+  document.body.classList.toggle("light");
+});
+
+// Download DOCX
+downloadBtn.addEventListener("click", async () => {
   try {
-    const response = await fetch(defaultFile);
-    const blob = await response.blob();
+    status.textContent = "⏳ Converting...";
+    const html = editor.innerHTML;
+    const res = await fetch("/download", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ html }),
+    });
+    if (!res.ok) throw new Error("Download failed");
 
-    // Create a copy for editing
-    const copyFile = new File([blob], defaultFile, { type: blob.type });
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "front3snsvm.docx";
+    a.click();
+    URL.revokeObjectURL(url);
 
-    // Call your existing DOCX loading function
-    if (typeof loadDocxFile === 'function') {
-      loadDocxFile(copyFile);
-    }
-  } catch (error) {
-    console.error('Failed to load the default DOCX file:', error);
+    status.textContent = "✅ Downloaded!";
+  } catch (err) {
+    console.error(err);
+    alert("Download failed");
+    status.textContent = "❌ Failed";
   }
 });
