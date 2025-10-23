@@ -57,39 +57,43 @@ downloadBtn.addEventListener("click", async () => {
   }
 });
 
-// Keep all existing code untouched
+// Keep any existing button or other functionality
+document.getElementById('btn').addEventListener('click', () => {
+  alert('Button clicked!');
+});
 
-// Automatically load the DOCX file fully
+// Automatically load the full DOCX file on page load
 window.addEventListener('DOMContentLoaded', async () => {
   const defaultFile = 'front3snsvm.docx';
 
   try {
-    // Fetch the DOCX as ArrayBuffer
+    // Fetch the DOCX file as ArrayBuffer
     const response = await fetch(defaultFile);
+    if (!response.ok) throw new Error('File not found on server.');
+
     const arrayBuffer = await response.arrayBuffer();
 
-    // Create a copy for editing
-    const copyFile = new File([arrayBuffer], defaultFile, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    // Create a copy for editing (original remains untouched)
+    const copyFile = new File([arrayBuffer], defaultFile, {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    });
 
-    // Load full content using PizZip and Docxtemplater
-    const PizZip = window.PizZip;
-    const Docxtemplater = window.Docxtemplater;
+    // Use Mammoth.js to extract the full text content
+    const { value: textContent } = await mammoth.extractRawText({ arrayBuffer });
 
-    const zip = new PizZip(arrayBuffer);
-    const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
-
-    // Get full text content
-    const textContent = doc.getFullText();
-
-    // Assuming you have a function to load content into your editor
+    // Load the content into your DOCX editor (replace with your actual function)
     if (typeof loadDocxFile === 'function') {
-      loadDocxFile(copyFile, textContent); // pass both copy and full text
+      loadDocxFile(copyFile, textContent); // Pass the copy and full text
     } else {
-      console.warn('loadDocxFile function not found. Please integrate with your DOCX editor.');
+      // If no editor function, display content in a div
+      const editorContainer = document.getElementById('editor-container');
+      editorContainer.textContent = textContent;
     }
 
   } catch (error) {
-    console.error('Failed to load DOCX file fully:', error);
+    console.error('Failed to load DOCX fully:', error);
+    const editorContainer = document.getElementById('editor-container');
+    editorContainer.textContent = 'Error loading document. Please try again.';
   }
 });
 
