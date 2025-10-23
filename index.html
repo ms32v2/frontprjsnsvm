@@ -1,67 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SNSVM DOCX Editor</title>
+  <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx@7.6.0/build/index.min.js"></script>
   <style>
-    html, body {
-      margin: 0;
-      height: 100%;
-      overflow: hidden;
-      background: #f3f3f3;
-      font-family: Arial, sans-serif;
-    }
-    header {
-      background: #0078d7;
-      color: white;
-      padding: 10px 16px;
-      font-size: 18px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    button {
-      background: white;
-      border: none;
-      color: #0078d7;
-      font-weight: bold;
-      padding: 8px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #e6e6e6;
-    }
-    iframe {
-      width: 100%;
-      height: calc(100vh - 50px);
-      border: none;
-    }
+    html, body { margin:0; height:100%; }
+    header { padding:10px; background:#0078d7; color:white; display:flex; justify-content:space-between; align-items:center; }
+    button { background:white; border:none; color:#0078d7; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold; }
+    button:hover { background:#e6e6e6; }
+    #editor { height:calc(100vh - 50px); }
   </style>
 </head>
 <body>
   <header>
     SNSVM DOCX Editor
-    <button id="download">Download Copy</button>
+    <div>
+      <button id="downloadBtn">Download as DOCX</button>
+    </div>
   </header>
-
-  <iframe id="editorFrame"></iframe>
+  <textarea id="editor"></textarea>
 
   <script>
-    const docUrl = location.origin + "/snsvmsk.docx";
-    const iframe = document.getElementById("editorFrame");
-    const viewerUrl =
-      "https://documentserver.onlyoffice.com/word-editor?fileUrl=" +
-      encodeURIComponent(docUrl);
+    // Initialize TinyMCE
+    tinymce.init({
+      selector:'#editor',
+      height: "100%",
+      menubar: true,
+      plugins: 'lists link image table wordcount',
+      toolbar: 'undo redo | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image table',
+    });
 
-    iframe.src = viewerUrl;
+    // Load original docx content
+    async function loadDocx() {
+      const response = await fetch('/snsvmsk.docx');
+      const arrayBuffer = await response.arrayBuffer();
+      const doc = new docx.Document(arrayBuffer);
+      const paragraphs = doc.getParagraphs ? doc.getParagraphs() : [];
+      const text = paragraphs.map(p => p.text || '').join('\n\n');
+      tinymce.activeEditor.setContent(text);
+    }
 
-    // Download copy without touching the original
-    document.getElementById("download").addEventListener("click", () => {
-      const a = document.createElement("a");
-      a.href = docUrl;
-      a.download = "snsvmsk.docx";
+    loadDocx();
+
+    // Download edited content as DOCX
+    document.getElementById('downloadBtn').addEventListener('click', async () => {
+      const { Document, Packer, Paragraph, TextRun } = docx;
+      const content = tinymce.activeEditor.getContent({ format: 'text' });
+      const doc = new Document();
+      content.split('\n').forEach(line => {
+        doc.addSection({ children: [ new Paragraph({ children: [new TextRun(line)] }) ] });
+      });
+      const blob = await Packer.toBlob(doc);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'snsvmsk_copy.docx';
       a.click();
     });
   </script>
