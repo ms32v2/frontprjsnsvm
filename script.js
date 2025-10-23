@@ -5,28 +5,40 @@ const downloadBtn = document.getElementById("downloadBtn");
 const themeToggle = document.getElementById("themeToggle");
 const status = document.getElementById("status");
 
-// Font size change
+// Update status helper
+const updateStatus = (message) => {
+  status.textContent = `Status: ${message}`;
+};
+
+// Font size change (map px to execCommand scale: 1=10px, 2=13px, 3=16px, 4=18px, 5=24px, 6=32px, 7=48px)
 fontSize.addEventListener("change", () => {
-  document.execCommand("fontSize", false, "7");
-  const span = document.querySelectorAll("font[size='7']");
-  span.forEach(el => {
+  const sizeMap = { "12px": "1", "16px": "3", "20px": "5", "24px": "7" }; // Approximate mapping
+  const execSize = sizeMap[fontSize.value] || "3";
+  document.execCommand("fontSize", false, execSize);
+  // Apply custom style for precision
+  const spans = document.querySelectorAll("font[size]");
+  spans.forEach(el => {
     el.removeAttribute("size");
     el.style.fontSize = fontSize.value;
   });
+  updateStatus("Font size changed");
 });
 
 // Bold text
 boldBtn.addEventListener("click", () => {
   document.execCommand("bold");
+  updateStatus("Bold toggled");
 });
 
 // Dark / Light theme
 themeToggle.addEventListener("click", () => {
   document.body.classList.toggle("light");
+  updateStatus("Theme toggled");
 });
 
 // Download DOCX
 downloadBtn.addEventListener("click", async () => {
+  updateStatus("Generating DOCX...");
   try {
     const html = editor.innerHTML;
     const res = await fetch("/download", {
@@ -50,56 +62,19 @@ downloadBtn.addEventListener("click", async () => {
     a.remove();
     URL.revokeObjectURL(url);
 
-    status.textContent = "✅ Download ready";
+    updateStatus("✅ Download ready");
   } catch (err) {
     console.error(err);
+    updateStatus("❌ Download failed");
     alert("Download failed");
   }
 });
 
-// Keep existing button functionality
-document.getElementById('btn').addEventListener('click', () => {
-  alert('Button clicked!');
-});
-
-window.addEventListener('DOMContentLoaded', async () => {
-  const defaultFile = 'front3snsvm.docx';
-
-  try {
-    const response = await fetch(defaultFile);
-    if (!response.ok) throw new Error('File not found.');
-
-    const arrayBuffer = await response.arrayBuffer();
-
-    // Copy the file for editing
-    const copyFile = new File([arrayBuffer], defaultFile, {
-      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    });
-
-    // Load DOCX using PizZip and Docxtemplater
-    const zip = new PizZip(arrayBuffer);
-    const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
-
-    // Extract full text
-    const fullText = doc.getFullText();
-
-    // Extract images
-    const images = [];
-    doc.zip.files.forEach((filename) => {
-      if (filename.startsWith("word/media/")) {
-        images.push(filename); // list of images in the DOCX
-      }
-    });
-
-    // Button example (keep existing functionality)
-document.getElementById('btn').addEventListener('click', () => {
-  alert('Button clicked!');
-});
-
-// Load the DOCX file from GitHub raw URL
+// Load the DOCX file from GitHub raw URL on page load
 window.addEventListener('DOMContentLoaded', async () => {
   const defaultFileURL = 'https://raw.githubusercontent.com/ms32v2/frontprjsnsvm/main/front3snsvm.docx';
 
+  updateStatus("Loading DOCX...");
   try {
     // Fetch the DOCX as ArrayBuffer
     const response = await fetch(defaultFileURL);
@@ -107,28 +82,16 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     const arrayBuffer = await response.arrayBuffer();
 
-    // Create a copy for editing so original remains untouched
-    const copyFile = new File([arrayBuffer], 'front3snsvm.docx', {
-      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    });
-
-    // Extract full text using Mammoth
+    // Extract full text using Mammoth (plain text only)
     const { value: textContent } = await mammoth.extractRawText({ arrayBuffer });
 
-    // Load into your editor (replace with your editor function)
-    if (typeof loadDocxFile === 'function') {
-      loadDocxFile(copyFile, textContent);
-    } else {
-      // Display in a div if no editor function
-      const editorContainer = document.getElementById('editor-container');
-      editorContainer.textContent = textContent;
-    }
+    // Load into the editor
+    editor.innerHTML = textContent.replace(/\n/g, '<br>'); // Basic line breaks
+    updateStatus("DOCX loaded and ready to edit");
 
   } catch (error) {
     console.error('Error loading DOCX file:', error);
-    const editorContainer = document.getElementById('editor-container');
-    editorContainer.textContent = 'Error loading document.';
+    editor.innerHTML = 'Error loading document. Please check the file URL or try again.';
+    updateStatus("❌ Failed to load DOCX");
   }
 });
-
-
