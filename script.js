@@ -1,25 +1,43 @@
 (async function(){
-  const viewer = document.getElementById('viewer');
+  const editor = document.getElementById('editor');
   const downloadBtn = document.getElementById('downloadBtn');
   const status = document.getElementById('status');
 
-  // Load DOCX content as HTML
-  async function loadDoc() {
-    try {
+  async function loadDoc(){
+    try{
       const res = await fetch('/file');
       if(!res.ok) throw new Error('Failed to load file');
       const html = await res.text();
-      viewer.innerHTML = html || '<p>Empty file</p>';
+      editor.innerHTML = html || '<p></p>';
       status.textContent = 'Status: Loaded';
-    } catch(e) {
+    }catch(e){
       console.error(e);
       status.textContent = 'Status: Error loading file';
     }
   }
 
-  // Download DOCX
-  downloadBtn.addEventListener('click', () => {
-    window.location.href = '/download';
+  downloadBtn.addEventListener('click', async ()=>{
+    try{
+      const html = editor.innerHTML;
+      const res = await fetch('/download', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ html })
+      });
+      if(!res.ok) throw new Error('Download failed');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'edited.docx';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    }catch(e){
+      console.error(e);
+      alert('Download failed');
+    }
   });
 
   await loadDoc();
