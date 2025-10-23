@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SNSVM DOCX Editor</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="toolbar">
+    <button onclick="execCmd('bold')"><b>B</b></button>
+    <button onclick="execCmd('italic')"><i>I</i></button>
+    <button onclick="execCmd('underline')"><u>U</u></button>
+    <button onclick="execCmd('insertUnorderedList')">• List</button>
+    <button onclick="execCmd('insertOrderedList')">1. List</button>
+    <button onclick="resetContent()">Reset</button>
+    <button onclick="downloadDocx()">Download .docx</button>
+  </div>
+
+  <div id="editor" contenteditable="true" class="editor">
+    Loading snsvmsk.docx...
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html-docx-js/0.3.1/html-docx.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
