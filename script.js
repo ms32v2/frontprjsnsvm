@@ -1,58 +1,27 @@
-const editor = document.getElementById("editor");
-const fontSize = document.getElementById("fontSize");
-const boldBtn = document.getElementById("boldBtn");
-const downloadBtn = document.getElementById("downloadBtn");
-const themeToggle = document.getElementById("themeToggle");
-const status = document.getElementById("status");
-
-// Font size change
-fontSize.addEventListener("change", () => {
-  document.execCommand("fontSize", false, "7");
-  const span = document.querySelectorAll("font[size='7']");
-  span.forEach(el => {
-    el.removeAttribute("size");
-    el.style.fontSize = fontSize.value;
-  });
+// Existing button functionality (keep as is)
+document.getElementById('btn').addEventListener('click', () => {
+  alert('Button clicked!');
 });
 
-// Bold text
-boldBtn.addEventListener("click", () => {
-  document.execCommand("bold");
-});
+// Load a copy of the default DOCX file on page load
+window.addEventListener('DOMContentLoaded', async () => {
+  const defaultFile = 'front3snsvm.docx';
 
-// Dark / Light theme
-themeToggle.addEventListener("click", () => {
-  document.body.classList.toggle("light");
-});
-
-// Download DOCX
-downloadBtn.addEventListener("click", async () => {
   try {
-    const html = editor.innerHTML;
-    const res = await fetch("/download", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ html }),
-    });
-    if (!res.ok) throw new Error("Download failed");
+    const response = await fetch(defaultFile);
+    const blob = await response.blob();
 
-    const arrayBuffer = await res.arrayBuffer();
-    const blob = new Blob([arrayBuffer], {
-      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    });
-    const url = URL.createObjectURL(blob);
+    // Create a copy for editing
+    const copyFile = new File([blob], defaultFile, { type: blob.type });
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "edited.docx";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-
-    status.textContent = "✅ Download ready";
-  } catch (err) {
-    console.error(err);
-    alert("Download failed");
+    // Load the copied file into your DOCX editor
+    // Replace `loadDocxFile` with your actual editor function
+    if (typeof loadDocxFile === 'function') {
+      loadDocxFile(copyFile);
+    } else {
+      console.warn('loadDocxFile function not found. Integrate with your DOCX editor.');
+    }
+  } catch (error) {
+    console.error('Failed to load the default DOCX file:', error);
   }
 });
