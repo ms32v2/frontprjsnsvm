@@ -1,6 +1,7 @@
 (async function(){
   const editor = document.getElementById('editor');
   const saveBtn = document.getElementById('saveBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
   const status = document.getElementById('status');
   const wordCount = document.getElementById('wordCount');
   const autoSaveCheckbox = document.getElementById('autoSave');
@@ -36,6 +37,10 @@
       console.error(e); setStatus('save error');
     }
   }
+
+  document.getElementById('downloadBtn').addEventListener('click', () => {
+    window.location.href = '/download';
+  });
 
   function updateWordCount(){
     const text = editor.innerText || '';
