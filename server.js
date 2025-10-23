@@ -24,13 +24,14 @@ if (!fs.existsSync(FILE_PATH)) {
 }
 
 app.use(express.json({ limit: '20mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname)); // serve static files from root
 
-// Add route for "/" to serve index.html
+// Serve index.html on root
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Return the doc content as HTML
 app.get('/file', async (req, res) => {
   try {
     const result = await mammoth.convertToHtml({ path: FILE_PATH });
@@ -41,6 +42,7 @@ app.get('/file', async (req, res) => {
   }
 });
 
+// Save edited HTML back to docx
 app.post('/save', async (req, res) => {
   try {
     const html = req.body.html || '';
