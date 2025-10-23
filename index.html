@@ -1,21 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Front Project</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>front3snsvm.docx — Editor</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <h1>Welcome to Front Project</h1>
+  <h1>front3snsvm.docx — Editable Copy</h1>
 
-  <!-- Editor placeholder -->
-  <div id="editor-container">
-    <!-- Your DOCX editor should be initialized here -->
+  <div class="toolbar">
+    <select id="fontSize">
+      <option value="12px">12px</option>
+      <option value="16px" selected>16px</option>
+      <option value="20px">20px</option>
+      <option value="24px">24px</option>
+    </select>
+    <button id="boldBtn"><b>B</b></button>
+    <button id="italicBtn"><i>I</i></button>
+    <button id="downloadBtn">Download DOCX</button>
+    <button id="themeToggle">Dark/Light</button>
+    <span id="status">Status: Ready</span>
   </div>
 
-  <button id="btn">Click Me</button>
-  
+  <div id="editor" contenteditable="true">
+    <p><b>Hello</b>, this is an <i>editable</i> document.</p>
+    <p>Change fonts, apply <b>bold</b>, <i>italic</i>, and export to .docx.</p>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
