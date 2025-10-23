@@ -1,4 +1,4 @@
-// {
+ {
   "name": "front3snsvm",
   "version": "1.0.0",
   "main": "server.js",
@@ -12,3 +12,4 @@
     "express": "^4.19.2"
   }
 }
+
