@@ -1,8 +1,5 @@
-=========================
-📦 package.json
-=========================
 {
-  "name": "editable-front3snsvm",
+  "name": "render-editable-docx",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
