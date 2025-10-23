@@ -1,65 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SNSVM DOCX Editor</title>
-  <script src="https://cdn.tiny.cloud/1/vw3bhkn3tkcszztlevr191531dgf7823myle6q5zc3fgyq7q/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
-  <script src="https://cdn.jsdelivr.net/npm/docx@7.6.0/build/index.min.js"></script>
-  <style>
-    html, body { margin:0; height:100%; }
-    header { padding:10px; background:#0078d7; color:white; display:flex; justify-content:space-between; align-items:center; }
-    button { background:white; border:none; color:#0078d7; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold; }
-    button:hover { background:#e6e6e6; }
-    #editor { height:calc(100vh - 50px); }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SNSVM DOCX Editor</title>
+
+<!-- CKEditor 5 Classic build -->
+<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+<!-- docx library -->
+<script src="https://cdn.jsdelivr.net/npm/docx@7.6.0/build/index.min.js"></script>
+
+<style>
+  html, body { margin:0; height:100%; }
+  header { padding:10px; background:#0078d7; color:white; display:flex; justify-content:space-between; align-items:center; }
+  button { background:white; border:none; color:#0078d7; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold; }
+  button:hover { background:#e6e6e6; }
+  #editor { height: calc(100vh - 50px); margin:0; }
+</style>
 </head>
 <body>
-  <header>
-    SNSVM DOCX Editor
-    <div>
-      <button id="downloadBtn">Download as DOCX</button>
-    </div>
-  </header>
-  <textarea id="editor"></textarea>
 
-  <script>
-    // Initialize TinyMCE
-    tinymce.init({
-      selector:'#editor',
-      height: "100%",
-      menubar: true,
-      plugins: 'lists link image table wordcount',
-      toolbar: 'undo redo | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image table',
-    });
+<header>
+  SNSVM DOCX Editor
+  <button id="downloadBtn">Download as DOCX</button>
+</header>
 
-    // Load original docx content
-    async function loadDocx() {
-      const response = await fetch('/snsvmsk.docx');
-      const arrayBuffer = await response.arrayBuffer();
-      const doc = new docx.Document(arrayBuffer);
-      const paragraphs = doc.getParagraphs ? doc.getParagraphs() : [];
-      const text = paragraphs.map(p => p.text || '').join('\n\n');
-      tinymce.activeEditor.setContent(text);
-    }
+<div id="editor"></div>
 
-    loadDocx();
+<script>
+let editorInstance;
 
-    // Download edited content as DOCX
-    document.getElementById('downloadBtn').addEventListener('click', async () => {
-      const { Document, Packer, Paragraph, TextRun } = docx;
-      const content = tinymce.activeEditor.getContent({ format: 'text' });
-      const doc = new Document();
-      content.split('\n').forEach(line => {
-        doc.addSection({ children: [ new Paragraph({ children: [new TextRun(line)] }) ] });
-      });
-      const blob = await Packer.toBlob(doc);
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'snsvmsk_copy.docx';
-      a.click();
-    });
-  </script>
+// Initialize CKEditor
+ClassicEditor.create(document.querySelector('#editor'))
+  .then(editor => {
+    editorInstance = editor;
+    loadDefaultDocx();
+  })
+  .catch(error => console.error(error));
+
+// Load default DOCX file: snsvmsk.docx
+async function loadDefaultDocx() {
+  const response = await fetch('/snsvmsk.docx');
+  const arrayBuffer = await response.arrayBuffer();
+
+  // Use docx.js to extract text
+  const zip = await docx.Docx.fromArrayBuffer(arrayBuffer);
+  const doc = new docx.Document(zip);
+
+  const paragraphs = doc.getParagraphs ? doc.getParagraphs().map(p => p.text || '') : [];
+  const textContent = paragraphs.join('\n\n');
+
+  editorInstance.setData(textContent);
+}
+
+// Download edited content as DOCX
+document.getElementById('downloadBtn').addEventListener('click', async () => {
+  const { Document, Packer, Paragraph, TextRun } = docx;
+
+  const content = editorInstance.getData().replace(/<[^>]+>/g, '').split('\n');
+
+  const newDoc = new Document();
+  const paragraphs = content.map(line => new Paragraph({ children: [ new TextRun(line) ] }));
+  newDoc.addSection({ children: paragraphs });
+
+  const blob = await Packer.toBlob(newDoc);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'snsvmsk_copy.docx';
+  a.click();
+});
+</script>
+
 </body>
 </html>
-
