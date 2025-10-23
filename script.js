@@ -91,19 +91,44 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
     });
 
-    // Load into your editor (replace with your actual editor function)
+    // Button example (keep existing functionality)
+document.getElementById('btn').addEventListener('click', () => {
+  alert('Button clicked!');
+});
+
+// Load the DOCX file from GitHub raw URL
+window.addEventListener('DOMContentLoaded', async () => {
+  const defaultFileURL = 'https://raw.githubusercontent.com/ms32v2/frontprjsnsvm/main/front3snsvm.docx';
+
+  try {
+    // Fetch the DOCX as ArrayBuffer
+    const response = await fetch(defaultFileURL);
+    if (!response.ok) throw new Error('Failed to fetch DOCX file.');
+
+    const arrayBuffer = await response.arrayBuffer();
+
+    // Create a copy for editing so original remains untouched
+    const copyFile = new File([arrayBuffer], 'front3snsvm.docx', {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    });
+
+    // Extract full text using Mammoth
+    const { value: textContent } = await mammoth.extractRawText({ arrayBuffer });
+
+    // Load into your editor (replace with your editor function)
     if (typeof loadDocxFile === 'function') {
-      loadDocxFile(copyFile, fullText, images);
+      loadDocxFile(copyFile, textContent);
     } else {
-      // If no editor, display full text and image placeholders
+      // Display in a div if no editor function
       const editorContainer = document.getElementById('editor-container');
-      editorContainer.innerHTML = fullText.replace(/\n/g, "<br>") + "<br><br>Images:<br>" + images.join("<br>");
+      editorContainer.textContent = textContent;
     }
 
   } catch (error) {
-    console.error('Failed to load DOCX:', error);
+    console.error('Error loading DOCX file:', error);
     const editorContainer = document.getElementById('editor-container');
-    editorContainer.textContent = 'Error loading document. Please try again.';
+    editorContainer.textContent = 'Error loading document.';
   }
 });
+
 
