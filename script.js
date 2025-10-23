@@ -1,73 +1,58 @@
-(async function(){
-  const editor = document.getElementById('editor');
-  const downloadBtn = document.getElementById('downloadBtn');
-  const status = document.getElementById('status');
-  const fontSelect = document.getElementById('fontSelect');
-  const boldBtn = document.getElementById('boldBtn');
-  const themeBtn = document.getElementById('themeBtn');
-  let darkMode = true;
+const editor = document.getElementById("editor");
+const fontSize = document.getElementById("fontSize");
+const boldBtn = document.getElementById("boldBtn");
+const downloadBtn = document.getElementById("downloadBtn");
+const themeToggle = document.getElementById("themeToggle");
+const status = document.getElementById("status");
 
-  // Load DOCX content
-  async function loadDoc(){
-    try{
-      const res = await fetch('/file');
-      if(!res.ok) throw new Error('Failed to load file');
-      const html = await res.text();
-      editor.innerHTML = html || '<p></p>';
-      status.textContent = 'Status: Loaded';
-    }catch(e){
-      console.error(e);
-      status.textContent = 'Status: Error loading file';
-    }
+// Font size change
+fontSize.addEventListener("change", () => {
+  document.execCommand("fontSize", false, "7");
+  const span = document.querySelectorAll("font[size='7']");
+  span.forEach(el => {
+    el.removeAttribute("size");
+    el.style.fontSize = fontSize.value;
+  });
+});
+
+// Bold text
+boldBtn.addEventListener("click", () => {
+  document.execCommand("bold");
+});
+
+// Dark / Light theme
+themeToggle.addEventListener("click", () => {
+  document.body.classList.toggle("light");
+});
+
+// Download DOCX
+downloadBtn.addEventListener("click", async () => {
+  try {
+    const html = editor.innerHTML;
+    const res = await fetch("/download", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ html }),
+    });
+    if (!res.ok) throw new Error("Download failed");
+
+    const arrayBuffer = await res.arrayBuffer();
+    const blob = new Blob([arrayBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "edited.docx";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    status.textContent = "✅ Download ready";
+  } catch (err) {
+    console.error(err);
+    alert("Download failed");
   }
-
-  // Download edited DOCX
-  downloadBtn.addEventListener('click', async ()=>{
-    try{
-      const html = editor.innerHTML;
-      const res = await fetch('/download', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ html })
-      });
-      if(!res.ok) throw new Error('Download failed');
-
-      const arrayBuffer = await res.arrayBuffer();
-      const blob = new Blob([arrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-      const url = window.URL.createObjectURL(blob);
-
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'edited.docx';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-
-      status.textContent = 'Status: Download ready';
-    }catch(e){
-      console.error(e);
-      alert('Download failed');
-    }
-  });
-
-  // Bold toggle
-  boldBtn.addEventListener('click', ()=>{ document.execCommand('bold'); });
-
-  // Font selection
-  fontSelect.addEventListener('change', ()=>{ document.execCommand('fontName', false, fontSelect.value); });
-
-  // Dark/Light theme toggle
-  themeBtn.addEventListener('click', ()=>{
-    darkMode = !darkMode;
-    if(darkMode){
-      document.body.classList.add('dark');
-      document.body.classList.remove('light');
-    } else {
-      document.body.classList.add('light');
-      document.body.classList.remove('dark');
-    }
-  });
-
-  await loadDoc();
-})();
+});
