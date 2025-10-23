@@ -1,4 +1,3 @@
-// server.js
 const express = require("express");
 const path = require("path");
 const bodyParser = require("body-parser");
@@ -11,17 +10,15 @@ const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json({ limit: "5mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
-// Root route → serve index.html
+// Serve index.html
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// POST /download → Convert edited HTML to DOCX and send as attachment
+// Convert HTML to DOCX and return as download
 app.post("/download", async (req, res) => {
   try {
     const html = req.body.html || "";
-
-    // 🧠 Sanitize HTML into plain text lines
     const text = html
       .replace(/<style[^>]*>.*?<\/style>/gi, "")
       .replace(/<script[^>]*>.*?<\/script>/gi, "")
@@ -29,11 +26,8 @@ app.post("/download", async (req, res) => {
       .replace(/\n{2,}/g, "\n")
       .trim();
 
-    if (!text) {
-      return res.status(400).send("Empty document");
-    }
+    if (!text) return res.status(400).send("Empty document");
 
-    // 📝 Build DOCX file
     const doc = new Document({
       sections: [
         {
@@ -46,7 +40,6 @@ app.post("/download", async (req, res) => {
 
     const buffer = await Packer.toBuffer(doc);
 
-    // ✅ Proper binary headers
     res.setHeader(
       "Content-Disposition",
       'attachment; filename="edited.docx"'
