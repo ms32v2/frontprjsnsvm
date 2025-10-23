@@ -56,3 +56,41 @@ downloadBtn.addEventListener("click", async () => {
     alert("Download failed");
   }
 });
+
+// Keep all existing code untouched
+
+// Automatically load the DOCX file fully
+window.addEventListener('DOMContentLoaded', async () => {
+  const defaultFile = 'front3snsvm.docx';
+
+  try {
+    // Fetch the DOCX as ArrayBuffer
+    const response = await fetch(defaultFile);
+    const arrayBuffer = await response.arrayBuffer();
+
+    // Create a copy for editing
+    const copyFile = new File([arrayBuffer], defaultFile, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+
+    // Load full content using PizZip and Docxtemplater
+    const PizZip = window.PizZip;
+    const Docxtemplater = window.Docxtemplater;
+
+    const zip = new PizZip(arrayBuffer);
+    const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
+
+    // Get full text content
+    const textContent = doc.getFullText();
+
+    // Assuming you have a function to load content into your editor
+    if (typeof loadDocxFile === 'function') {
+      loadDocxFile(copyFile, textContent); // pass both copy and full text
+    } else {
+      console.warn('loadDocxFile function not found. Please integrate with your DOCX editor.');
+    }
+
+  } catch (error) {
+    console.error('Failed to load DOCX file fully:', error);
+  }
+});
+
+
