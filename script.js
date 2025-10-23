@@ -7,6 +7,7 @@
   const themeBtn = document.getElementById('themeBtn');
   let darkMode = true;
 
+  // Load DOCX content
   async function loadDoc(){
     try{
       const res = await fetch('/file');
@@ -20,6 +21,7 @@
     }
   }
 
+  // Download edited DOCX
   downloadBtn.addEventListener('click', async ()=>{
     try{
       const html = editor.innerHTML;
@@ -29,8 +31,11 @@
         body: JSON.stringify({ html })
       });
       if(!res.ok) throw new Error('Download failed');
-      const blob = await res.blob();
+
+      const arrayBuffer = await res.arrayBuffer();
+      const blob = new Blob([arrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
       const url = window.URL.createObjectURL(blob);
+
       const a = document.createElement('a');
       a.href = url;
       a.download = 'edited.docx';
@@ -38,6 +43,8 @@
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
+
+      status.textContent = 'Status: Download ready';
     }catch(e){
       console.error(e);
       alert('Download failed');
@@ -45,14 +52,10 @@
   });
 
   // Bold toggle
-  boldBtn.addEventListener('click', ()=>{
-    document.execCommand('bold');
-  });
+  boldBtn.addEventListener('click', ()=>{ document.execCommand('bold'); });
 
-  // Font change
-  fontSelect.addEventListener('change', ()=>{
-    document.execCommand('fontName', false, fontSelect.value);
-  });
+  // Font selection
+  fontSelect.addEventListener('change', ()=>{ document.execCommand('fontName', false, fontSelect.value); });
 
   // Dark/Light theme toggle
   themeBtn.addEventListener('click', ()=>{
