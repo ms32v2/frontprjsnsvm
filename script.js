@@ -1,126 +1,102 @@
-const editor = document.getElementById("editor");
-const fontSize = document.getElementById("fontSize");
-const boldBtn = document.getElementById("boldBtn");
-const downloadOriginalBtn = document.getElementById("downloadOriginalBtn");
-const downloadBtn = document.getElementById("downloadBtn");
-const themeToggle = document.getElementById("themeToggle");
-const status = document.getElementById("status");
+const express = require("express");
+const path = require("path");
+const bodyParser = require("body-parser");
+const { Document, Packer, Paragraph, TextRun, PictureRun } = require("docx");
 
-// Update status helper
-const updateStatus = (message) => {
-  status.textContent = `Status: ${message}`;
-};
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-// Font size change (map px to execCommand scale: 1=10px, 2=13px, 3=16px, 4=18px, 5=24px, 6=32px, 7=48px)
-fontSize.addEventListener("change", () => {
-  const sizeMap = { "12px": "1", "16px": "3", "20px": "5", "24px": "7" }; // Approximate mapping
-  const execSize = sizeMap[fontSize.value] || "3";
-  document.execCommand("fontSize", false, execSize);
-  // Apply custom style for precision
-  const spans = document.querySelectorAll("font[size]");
-  spans.forEach(el => {
-    el.removeAttribute("size");
-    el.style.fontSize = fontSize.value;
-  });
-  updateStatus("Font size changed");
+// Middleware
+app.use(bodyParser.json({ limit: "10mb" }));
+app.use(express.static(__dirname));
+
+// Serve index.html
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// Bold text
-boldBtn.addEventListener("click", () => {
-  document.execCommand("bold");
-  updateStatus("Bold toggled");
-});
-
-// Download Original DOCX (intact, no changes)
-downloadOriginalBtn.addEventListener("click", async () => {
-  updateStatus("Downloading original DOCX...");
+// Convert HTML to DOCX and return as download
+app.post("/download", async (req, res) => {
   try {
-    const defaultFileURL = 'https://raw.githubusercontent.com/ms32v2/frontprjsnsvm/main/front3snsvm.docx';
-    const response = await fetch(defaultFileURL);
-    if (!response.ok) throw new Error("Failed to fetch original DOCX");
+    const html = req.body.html || "";
 
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
+    // Parse HTML for text and images
+    const paragraphs = [];
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "front3snsvm_original.docx";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    // Process each child element
+    const children = Array.from(tempDiv.childNodes);
+    let currentParagraph = [];
+    let imageBuffers = [];
 
-    updateStatus("✅ Original DOCX downloaded");
-  } catch (err) {
-    console.error(err);
-    updateStatus("❌ Original download failed");
-    alert("Original download failed");
-  }
-});
+    children.forEach(node => {
+      if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+        currentParagraph.push(new TextRun(node.textContent.trim()));
+      } else if (node.tagName === 'IMG' && node.src) {
+        const base64Data = node.src.split(',')[1];
+        const imageBuffer = Buffer.from(base64Data, 'base64');
+        imageBuffers.push(imageBuffer);
 
-// Download Edited DOCX
-downloadBtn.addEventListener("click", async () => {
-  updateStatus("Generating edited DOCX...");
-  try {
-    const html = editor.innerHTML;
-    const res = await fetch("/download", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ html }),
+        currentParagraph.push(
+          new PictureRun({
+            data: imageBuffer,
+            transformation: { width: 200, height: 200 }, // Default size; adjust as needed
+          })
+        );
+      } else if (node.tagName === 'P' || node.tagName === 'BR') {
+        if (currentParagraph.length > 0) {
+          paragraphs.push(new Paragraph({ children: currentParagraph }));
+          currentParagraph = [];
+        }
+      }
     });
-    if (!res.ok) throw new Error("Download failed");
 
-    const arrayBuffer = await res.arrayBuffer();
-    const blob = new Blob([arrayBuffer], {
-      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    if (currentParagraph.length > 0) {
+      paragraphs.push(new Paragraph({ children: currentParagraph }));
+    }
+
+    if (paragraphs.length === 0) return res.status(400).send("Empty document");
+
+    // Create DOCX with preserved characteristics (margins, page size, etc.)
+    const doc = new Document({
+      creator: "DOCX Editor App",
+      title: "Edited Document",
+      description: "Edited version of front3snsvm.docx",
+      sections: [
+        {
+          properties: {
+            page: {
+              size: {
+                width: 11906, // A4 width in twips (8.27 inches)
+                height: 16838, // A4 height in twips (11.69 inches)
+                orientation: "portrait", // Or "landscape"
+              },
+              margin: {
+                top: 1440, // 1 inch in twips (1440 twips = 1 inch)
+                right: 1440,
+                bottom: 1440,
+                left: 1440,
+              },
+            },
+          },
+          children: paragraphs,
+        },
+      ],
     });
-    const url = URL.createObjectURL(blob);
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "edited.docx";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    const buffer = await Packer.toBuffer(doc);
 
-    updateStatus("✅ Edited DOCX downloaded");
+    res.setHeader("Content-Disposition", 'attachment; filename="edited.docx"');
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    );
+    res.end(buffer);
   } catch (err) {
-    console.error(err);
-    updateStatus("❌ Edited download failed");
-    alert("Edited download failed");
+    console.error("Download Error:", err);
+    res.status(500).send("Download failed (server error)");
   }
 });
 
-// Dark / Light theme
-themeToggle.addEventListener("click", () => {
-  document.body.classList.toggle("light");
-  updateStatus("Theme toggled");
-});
-
-// Load the DOCX file from GitHub raw URL on page load
-window.addEventListener('DOMContentLoaded', async () => {
-  const defaultFileURL = 'https://raw.githubusercontent.com/ms32v2/frontprjsnsvm/main/front3snsvm.docx';
-
-  updateStatus("Loading DOCX...");
-  try {
-    // Fetch the DOCX as ArrayBuffer
-    const response = await fetch(defaultFileURL);
-    if (!response.ok) throw new Error('Failed to fetch DOCX file.');
-
-    const arrayBuffer = await response.arrayBuffer();
-
-    // Extract HTML with images using Mammoth (converts images to base64 data URIs)
-    const result = await mammoth.convertToHtml({ arrayBuffer });
-    const htmlContent = result.value; // HTML string with <img> tags for images
-
-    // Load into the editor
-    editor.innerHTML = htmlContent;
-    updateStatus("DOCX loaded and ready to edit");
-
-  } catch (error) {
-    console.error('Error loading DOCX file:', error);
-    editor.innerHTML = 'Error loading document. Please check the file URL or try again.';
-    updateStatus("❌ Failed to load DOCX");
-  }
-});
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
