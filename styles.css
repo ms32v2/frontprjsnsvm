@@ -32,14 +32,20 @@ button:hover {
   background-color: #555;
 }
 
+/* Increased editor area */
 #editor {
-  min-height: 400px;
-  padding: 15px;
+  min-height: 800px;       /* was 400px */
+  max-height: 1200px;      /* optional max height */
+  width: 90%;              /* increase width */
+  max-width: 1200px;       /* optional max width */
+  margin-left: auto;
+  margin-right: auto;
+  padding: 20px;           /* slightly more padding */
   border: 1px solid #444;
   border-radius: 8px;
   background-color: #1e1e1e;
   color: #eee;
-  overflow-y: auto;
+  overflow-y: auto;        /* scroll if content exceeds container */
 }
 
 .light {
