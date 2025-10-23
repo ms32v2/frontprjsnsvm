@@ -1,16 +1,17 @@
-import express from "express";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
+// server.js
+const express = require("express");
+const path = require("path");
 const app = express();
-app.use(express.static(path.join(__dirname, "public")));
+const PORT = process.env.PORT || 10000;
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+// Serve static files (like snsvmsk.docx and index.html)
+app.use(express.static(__dirname));
+
+// Serve the main page
+app.get("/", (_, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ SNSVM Editor running on http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`✅ SNSVM Editor running on http://localhost:${PORT}`);
+});
