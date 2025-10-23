@@ -1,25 +1,26 @@
 const editor = document.getElementById("editor");
 const fontSize = document.getElementById("fontSize");
 const boldBtn = document.getElementById("boldBtn");
-const italicBtn = document.getElementById("italicBtn");
 const downloadBtn = document.getElementById("downloadBtn");
 const themeToggle = document.getElementById("themeToggle");
 const status = document.getElementById("status");
 
-// Font size
+// Font size change
 fontSize.addEventListener("change", () => {
   document.execCommand("fontSize", false, "7");
-  document.querySelectorAll("font[size='7']").forEach(el => {
+  const span = document.querySelectorAll("font[size='7']");
+  span.forEach(el => {
     el.removeAttribute("size");
     el.style.fontSize = fontSize.value;
   });
 });
 
-// Bold / Italic
-boldBtn.addEventListener("click", () => document.execCommand("bold"));
-italicBtn.addEventListener("click", () => document.execCommand("italic"));
+// Bold text
+boldBtn.addEventListener("click", () => {
+  document.execCommand("bold");
+});
 
-// Theme switch
+// Dark / Light theme
 themeToggle.addEventListener("click", () => {
   document.body.classList.toggle("light");
 });
@@ -27,7 +28,6 @@ themeToggle.addEventListener("click", () => {
 // Download DOCX
 downloadBtn.addEventListener("click", async () => {
   try {
-    status.textContent = "⏳ Converting...";
     const html = editor.innerHTML;
     const res = await fetch("/download", {
       method: "POST",
@@ -36,18 +36,23 @@ downloadBtn.addEventListener("click", async () => {
     });
     if (!res.ok) throw new Error("Download failed");
 
-    const blob = await res.blob();
+    const arrayBuffer = await res.arrayBuffer();
+    const blob = new Blob([arrayBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
     const url = URL.createObjectURL(blob);
+
     const a = document.createElement("a");
     a.href = url;
-    a.download = "front3snsvm.docx";
+    a.download = "edited.docx";
+    document.body.appendChild(a);
     a.click();
+    a.remove();
     URL.revokeObjectURL(url);
 
-    status.textContent = "✅ Downloaded!";
+    status.textContent = "✅ Download ready";
   } catch (err) {
     console.error(err);
     alert("Download failed");
-    status.textContent = "❌ Failed";
   }
 });
