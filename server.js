@@ -1,8 +1,8 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const { Document, Packer, Paragraph, TextRun, Numbering, NumberFormat } = require('docx');
 const mammoth = require('mammoth');
-const { Document, Packer, Paragraph, TextRun } = require('docx');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,17 +24,17 @@ if (!fs.existsSync(FILE_PATH)) {
 }
 
 app.use(express.json({ limit: '20mb' }));
-app.use(express.static(__dirname)); // serve static files from root
+app.use(express.static(__dirname));
 
-// Serve index.html on root
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Return the doc content as HTML
+// Load DOCX content
 app.get('/file', async (req, res) => {
   try {
-    const result = await mammoth.convertToHtml({ path: FILE_PATH });
+    const data = fs.readFileSync(FILE_PATH);
+    const result = await mammoth.convertToHtml({ buffer: data });
     res.send(result.value);
   } catch (err) {
     console.error(err);
@@ -42,23 +42,65 @@ app.get('/file', async (req, res) => {
   }
 });
 
-// Save edited HTML back to docx
+// Save edited content with formatting
 app.post('/save', async (req, res) => {
   try {
     const html = req.body.html || '';
-    const paragraphs = html
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<\/p>/gi, '\n')
-      .replace(/<[^>]+>/g, '')
-      .split(/\n+/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-
     const doc = new Document();
-    for (const p of paragraphs) {
-      doc.addSection({
-        children: [new Paragraph({ children: [new TextRun({ text: p })] })],
+
+    // Parse HTML using jsdom
+    const { JSDOM } = require('jsdom');
+    const dom = new JSDOM(`<body>${html}</body>`);
+    const body = dom.window.document.body;
+
+    // Function to recursively convert HTML nodes to docx paragraphs/textRuns
+    function parseNode(node) {
+      let children = [];
+
+      node.childNodes.forEach((child) => {
+        if (child.nodeType === 3) {
+          // Text node
+          children.push(new TextRun({ text: child.textContent }));
+        } else if (child.nodeType === 1) {
+          // Element node
+          let options = {};
+          switch (child.tagName.toLowerCase()) {
+            case 'b':
+            case 'strong':
+              options.bold = true;
+              break;
+            case 'i':
+            case 'em':
+              options.italics = true;
+              break;
+            case 'u':
+              options.underline = {};
+              break;
+          }
+          const subRuns = parseNode(child);
+          subRuns.forEach(r => {
+            children.push(new TextRun({ ...options, text: r.text }));
+          });
+          if (child.tagName.toLowerCase() === 'p') {
+            doc.addSection({ children: [new Paragraph({ children })] });
+            children = [];
+          } else if (child.tagName.toLowerCase() === 'li') {
+            doc.addSection({
+              children: [new Paragraph({ children, bullet: { level: 0 } })],
+            });
+            children = [];
+          }
+        }
       });
+
+      return children;
+    }
+
+    parseNode(body);
+
+    // If body has remaining text not inside a <p> or <li>
+    if (body.textContent.trim().length > 0) {
+      doc.addSection({ children: [new Paragraph({ children: [new TextRun({ text: body.textContent })] })] });
     }
 
     const buffer = await Packer.toBuffer(doc);
@@ -69,6 +111,16 @@ app.post('/save', async (req, res) => {
     console.error(err);
     res.status(500).send('Save failed');
   }
+});
+
+// Download DOCX
+app.get('/download', (req, res) => {
+  res.download(FILE_PATH, 'front3snsvm.docx', (err) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send('Download failed');
+    }
+  });
 });
 
 app.listen(PORT, () => console.log(`Server running: http://localhost:${PORT}`));
