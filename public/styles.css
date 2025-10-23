@@ -1,0 +1,41 @@
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #f2f2f2;
+  margin: 0;
+  padding: 0;
+}
+
+.toolbar {
+  background: #fff;
+  border-bottom: 1px solid #ccc;
+  padding: 10px;
+  display: flex;
+  gap: 8px;
+  position: sticky;
+  top: 0;
+}
+
+.toolbar button {
+  background: #0078d4;
+  border: none;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.toolbar button:hover {
+  background: #005a9e;
+}
+
+.editor {
+  background: white;
+  margin: 20px auto;
+  padding: 20px;
+  width: 80%;
+  min-height: 600px;
+  border-radius: 10px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+}
