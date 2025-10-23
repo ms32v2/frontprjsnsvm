@@ -1,71 +1,11 @@
-(async function(){
-  const editor = document.getElementById('editor');
-  const saveBtn = document.getElementById('saveBtn');
-  const downloadBtn = document.getElementById('downloadBtn');
-  const status = document.getElementById('status');
-  const wordCount = document.getElementById('wordCount');
-  const autoSaveCheckbox = document.getElementById('autoSave');
-
-  let autoSaveTimer = null;
-  let dirty = false;
-
-  function setStatus(text){ status.textContent = 'Status: ' + text; }
-
-  async function loadDoc(){
-    setStatus('loading...');
-    try{
-      const res = await fetch('/file');
-      if(!res.ok) throw new Error('Failed to load file');
-      const html = await res.text();
-      editor.innerHTML = html || '<p></p>';
-      setStatus('loaded');
-      updateWordCount();
-    }catch(e){
-      console.error(e); setStatus('error');
-    }
-  }
-
-  async function saveDoc(){
-    setStatus('saving...');
-    const payload = { html: editor.innerHTML };
-    try{
-      const res = await fetch('/save', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-      if(!res.ok) throw new Error(await res.text());
-      setStatus('saved ' + new Date().toLocaleTimeString());
-      dirty = false;
-    }catch(e){
-      console.error(e); setStatus('save error');
-    }
-  }
-
-  document.getElementById('downloadBtn').addEventListener('click', () => {
-    window.location.href = '/download';
-  });
-
-  function updateWordCount(){
-    const text = editor.innerText || '';
-    const words = text.trim().split(/\s+/).filter(Boolean).length;
-    wordCount.textContent = 'Words: ' + words;
-  }
-
-  editor.addEventListener('input', ()=>{ dirty = true; updateWordCount(); });
-  saveBtn.addEventListener('click', saveDoc);
-
-  autoSaveCheckbox.addEventListener('change', ()=>{
-    if(autoSaveCheckbox.checked){
-      if(autoSaveTimer) clearInterval(autoSaveTimer);
-      autoSaveTimer = setInterval(()=>{ if(dirty) saveDoc(); }, 30000);
-    } else {
-      if(autoSaveTimer) clearInterval(autoSaveTimer);
-      autoSaveTimer = null;
-    }
-  });
-
-  window.addEventListener('keydown', (e)=>{
-    if((e.ctrlKey||e.metaKey) && e.key.toLowerCase() === 's'){
-      e.preventDefault(); saveDoc();
-    }
-  });
-
-  await loadDoc();
-})();
+:root{--bg:#f4f6fb;--card:#fff;--accent:#0066ff;--muted:#6b7280}
+*{box-sizing:border-box}
+body{font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);margin:0;color:#111}
+.top{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;background:linear-gradient(90deg,#fff,#f7fbff);box-shadow:0 2px 6px rgba(11,22,70,0.06)}
+.top h1{margin:0;font-size:1.1rem}
+.controls{display:flex;gap:12px;align-items:center}
+button{background:var(--accent);color:white;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
+.muted{color:var(--muted);font-size:0.9rem}
+main{padding:20px;max-width:980px;margin:18px auto}
+.editor{min-height:60vh;background:var(--card);padding:18px;border-radius:10px;box-shadow:0 8px 24px rgba(16,24,40,0.06);outline:none}
+.editor:focus{box-shadow:0 10px 30px rgba(16,24,40,0.08)}
