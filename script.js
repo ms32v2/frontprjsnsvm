@@ -2,6 +2,10 @@
   const editor = document.getElementById('editor');
   const downloadBtn = document.getElementById('downloadBtn');
   const status = document.getElementById('status');
+  const fontSelect = document.getElementById('fontSelect');
+  const boldBtn = document.getElementById('boldBtn');
+  const themeBtn = document.getElementById('themeBtn');
+  let darkMode = true;
 
   async function loadDoc(){
     try{
@@ -37,6 +41,28 @@
     }catch(e){
       console.error(e);
       alert('Download failed');
+    }
+  });
+
+  // Bold toggle
+  boldBtn.addEventListener('click', ()=>{
+    document.execCommand('bold');
+  });
+
+  // Font change
+  fontSelect.addEventListener('change', ()=>{
+    document.execCommand('fontName', false, fontSelect.value);
+  });
+
+  // Dark/Light theme toggle
+  themeBtn.addEventListener('click', ()=>{
+    darkMode = !darkMode;
+    if(darkMode){
+      document.body.classList.add('dark');
+      document.body.classList.remove('light');
+    } else {
+      document.body.classList.add('light');
+      document.body.classList.remove('dark');
     }
   });
 
