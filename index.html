@@ -1,0 +1,29 @@
+=========================
+📄 index.html
+=========================
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Editable front3snsvm.docx</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Editable Document — front3snsvm.docx</h1>
+    <div class="controls">
+      <button id="saveBtn">Save</button>
+      <label><input type="checkbox" id="autoSave"> Auto-save (30s)</label>
+      <span id="status" class="muted">Status: idle</span>
+      <span id="wordCount" class="muted">Words: 0</span>
+    </div>
+  </header>
+
+  <main>
+    <div id="editor" contenteditable="true" class="editor"></div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
