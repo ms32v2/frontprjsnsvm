@@ -1,24 +1,32 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Edit and Download Copy</title>
-  <link rel="stylesheet" href="styles.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Edit and Download Copy</title>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="top">
-    <h1>front3snsvm.docx — Editable Copy</h1>
-    <div class="controls">
-      <button id="downloadBtn">Download Edited DOCX</button>
-      <span id="status" class="muted">Status: Loaded</span>
-    </div>
-  </header>
+<header class="top">
+  <h1>front3snsvm.docx — Editable Copy</h1>
+  <div class="controls">
+    <select id="fontSelect">
+      <option value="Arial">Arial</option>
+      <option value="Times New Roman">Times New Roman</option>
+      <option value="Courier New">Courier New</option>
+      <option value="Verdana">Verdana</option>
+    </select>
+    <button id="boldBtn"><b>B</b></button>
+    <button id="downloadBtn">Download DOCX</button>
+    <button id="themeBtn">Dark/Light</button>
+    <span id="status" class="muted">Status: Loaded</span>
+  </div>
+</header>
 
-  <main>
-    <div id="editor" contenteditable="true" class="editor"></div>
-  </main>
+<main>
+  <div id="editor" contenteditable="true" class="editor"></div>
+</main>
 
-  <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
