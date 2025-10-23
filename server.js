@@ -8,17 +8,19 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(bodyParser.json({ limit: "5mb" }));
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(__dirname));
 
 // Serve index.html
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
 // Convert HTML to DOCX and return as download
 app.post("/download", async (req, res) => {
   try {
     const html = req.body.html || "";
+
+    // Clean HTML -> plain text
     const text = html
       .replace(/<style[^>]*>.*?<\/style>/gi, "")
       .replace(/<script[^>]*>.*?<\/script>/gi, "")
@@ -28,6 +30,7 @@ app.post("/download", async (req, res) => {
 
     if (!text) return res.status(400).send("Empty document");
 
+    // Create DOCX
     const doc = new Document({
       sections: [
         {
@@ -40,10 +43,8 @@ app.post("/download", async (req, res) => {
 
     const buffer = await Packer.toBuffer(doc);
 
-    res.setHeader(
-      "Content-Disposition",
-      'attachment; filename="edited.docx"'
-    );
+    // Send file
+    res.setHeader("Content-Disposition", 'attachment; filename="edited.docx"');
     res.setHeader(
       "Content-Type",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -55,5 +56,4 @@ app.post("/download", async (req, res) => {
   }
 });
 
-// Start server
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
