@@ -3,23 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Editable front3snsvm.docx</title>
+  <title>View front3snsvm.docx</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="top">
-    <h1>Editable Document — front3snsvm.docx</h1>
+    <h1>front3snsvm.docx (Read-only)</h1>
     <div class="controls">
-      <button id="saveBtn">Save</button>
       <button id="downloadBtn">Download DOCX</button>
-      <label><input type="checkbox" id="autoSave"> Auto-save (30s)</label>
-      <span id="status" class="muted">Status: idle</span>
-      <span id="wordCount" class="muted">Words: 0</span>
+      <span id="status" class="muted">Status: Loaded</span>
     </div>
   </header>
 
   <main>
-    <div id="editor" contenteditable="true" class="editor"></div>
+    <div id="viewer" class="editor" contenteditable="false"></div>
   </main>
 
   <script src="script.js"></script>
