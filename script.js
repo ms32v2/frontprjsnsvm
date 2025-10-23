@@ -57,44 +57,53 @@ downloadBtn.addEventListener("click", async () => {
   }
 });
 
-// Keep any existing button or other functionality
+// Keep existing button functionality
 document.getElementById('btn').addEventListener('click', () => {
   alert('Button clicked!');
 });
 
-// Automatically load the full DOCX file on page load
 window.addEventListener('DOMContentLoaded', async () => {
   const defaultFile = 'front3snsvm.docx';
 
   try {
-    // Fetch the DOCX file as ArrayBuffer
     const response = await fetch(defaultFile);
-    if (!response.ok) throw new Error('File not found on server.');
+    if (!response.ok) throw new Error('File not found.');
 
     const arrayBuffer = await response.arrayBuffer();
 
-    // Create a copy for editing (original remains untouched)
+    // Copy the file for editing
     const copyFile = new File([arrayBuffer], defaultFile, {
       type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     });
 
-    // Use Mammoth.js to extract the full text content
-    const { value: textContent } = await mammoth.extractRawText({ arrayBuffer });
+    // Load DOCX using PizZip and Docxtemplater
+    const zip = new PizZip(arrayBuffer);
+    const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
 
-    // Load the content into your DOCX editor (replace with your actual function)
+    // Extract full text
+    const fullText = doc.getFullText();
+
+    // Extract images
+    const images = [];
+    doc.zip.files.forEach((filename) => {
+      if (filename.startsWith("word/media/")) {
+        images.push(filename); // list of images in the DOCX
+      }
+    });
+
+    // Load into your editor (replace with your actual editor function)
     if (typeof loadDocxFile === 'function') {
-      loadDocxFile(copyFile, textContent); // Pass the copy and full text
+      loadDocxFile(copyFile, fullText, images);
     } else {
-      // If no editor function, display content in a div
+      // If no editor, display full text and image placeholders
       const editorContainer = document.getElementById('editor-container');
-      editorContainer.textContent = textContent;
+      editorContainer.innerHTML = fullText.replace(/\n/g, "<br>") + "<br><br>Images:<br>" + images.join("<br>");
     }
 
   } catch (error) {
-    console.error('Failed to load DOCX fully:', error);
+    console.error('Failed to load DOCX:', error);
     const editorContainer = document.getElementById('editor-container');
     editorContainer.textContent = 'Error loading document. Please try again.';
   }
 });
-
 
